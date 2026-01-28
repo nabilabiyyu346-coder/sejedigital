@@ -1,0 +1,27 @@
+.users-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.users-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.users-header h1 {
+  font-size: 28px;
+  margin: 0;
+}
+
+.users-table-wrapper {
+  overflow-x: auto;
+}
+
+.users-table-wrapper .table {
+  margin-bottom: 20px;
+}

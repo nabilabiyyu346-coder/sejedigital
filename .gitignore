@@ -1,0 +1,105 @@
+# Task Management BFF - Git Repository
+
+## Repository Information
+
+This is a public GitHub repository for the Task Management Application using Backend for Frontend (BFF) pattern.
+
+**Status**: Public Repository  
+**Sharing**: Not to be shared with others  
+**Version**: 1.0.0
+
+## What's Included
+
+### Backend
+- Express.js REST API server
+- PostgreSQL database integration
+- JWT authentication
+- User and Task management endpoints
+
+### Frontend  
+- React.js single page application
+- User registration and login
+- Task management dashboard
+- User management interface
+
+## Quick Start
+
+### Backend
+```bash
+cd backend
+npm install
+cp .env.example .env
+# Update .env with your database credentials
+npm run dev
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm start
+```
+
+## Repository Structure
+
+```
+task-management-bff/
+├── backend/           # Express.js server
+│   ├── src/
+│   │   ├── config/    # Database and configuration
+│   │   ├── controllers/
+│   │   ├── middleware/
+│   │   ├── routes/
+│   │   ├── utils/
+│   │   └── server.js
+│   ├── .env.example
+│   ├── package.json
+│   └── README.md
+├── frontend/          # React.js application
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── context/
+│   │   ├── styles/
+│   │   ├── App.js
+│   │   └── index.js
+│   ├── public/
+│   ├── package.json
+│   └── README.md
+└── README.md          # Main project README
+```
+
+## Documentation
+
+See individual README files in `backend/` and `frontend/` directories for detailed documentation.
+
+## API Documentation
+
+Complete API contracts and endpoint documentation available in `backend/README.md`.
+
+## Features
+
+✓ User Authentication (Register/Login)  
+✓ User Management (CRUD)  
+✓ Task Management (CRUD)  
+✓ Task Status Tracking  
+✓ User Assignment to Tasks  
+✓ BFF Pattern Implementation  
+✓ JWT Token Management  
+✓ PostgreSQL Database  
+
+## Important Notes
+
+- This is a public repository but should NOT be shared with others
+- Ensure `.env` files with secrets are never committed
+- `.gitignore` configured to exclude sensitive files
+- Always update `.env.example` with new environment variables
+
+## License
+
+MIT License
+
+## Support
+
+For questions about this project, refer to the README files or contact the project maintainer.
