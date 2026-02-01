@@ -19,7 +19,7 @@ const initDatabase = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS tasks (
         id SERIAL PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
+        title VARCHAR(100) NOT NULL,
         description TEXT,
         status VARCHAR(50) DEFAULT 'pending',
         assigned_to INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -36,4 +36,4 @@ const initDatabase = async () => {
   }
 };
 
-module.exports = { pool, initDatabase };
+module.exports = { initDatabase }; // Note: pool now from database.js
