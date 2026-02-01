@@ -1,104 +1,83 @@
 import React, { useState, useEffect } from 'react';
+import apiClient from '../services/apiClient';
 
-const TaskModal = ({ task, users, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    assigned_to: ''
-  });
-  const [error, setError] = useState('');
+const TaskModal = ({ show, onClose, task, users, onSave }) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [status, setStatus] = useState('todo');
+  const [userId, setUserId] = useState('');
 
   useEffect(() => {
     if (task) {
-      setFormData({
-        title: task.title,
-        description: task.description || '',
-        assigned_to: task.assigned_to || ''
-      });
+      setTitle(task.title);
+      setDescription(task.description || '');
+      setStatus(task.status);
+      setUserId(task.user_id || '');
+    } else {
+      setTitle('');
+      setDescription('');
+      setStatus('todo');
+      setUserId('');
     }
   }, [task]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
-    if (!formData.title.trim()) {
-      setError('Task title is required');
-      return;
+    const data = { title, description, status, user_id: userId || null };
+    try {
+      if (task) {
+        await apiClient.put(`/tasks/${task.id}`, data);
+      } else {
+        await apiClient.post('/tasks', data);
+      }
+      onSave();
+      onClose();
+    } catch (err) {
+      alert('Error saving task');
     }
-
-    const submitData = {
-      title: formData.title,
-      description: formData.description || null,
-      assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : null
-    };
-
-    onSave(submitData);
   };
+
+  if (!show) return null;
 
   return (
-    <div className="modal">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h2>{task ? 'Edit Task' : 'Create New Task'}</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
+    <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      <div className="modal-dialog">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">{task ? 'Edit Task' : 'Create Task'}</h5>
+            <button type="button" className="btn-close" onClick={onClose}></button>
+          </div>
+          <div className="modal-body">
+            <form onSubmit={handleSubmit}>
+              <div className="mb-3">
+                <label>Title</label>
+                <input type="text" className="form-control" value={title} onChange={(e) => setTitle(e.target.value)} required />
+              </div>
+              <div className="mb-3">
+                <label>Description</label>
+                <textarea className="form-control" value={description} onChange={(e) => setDescription(e.target.value)} />
+              </div>
+              <div className="mb-3">
+                <label>Status</label>
+                <select className="form-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+                  <option value="todo">To Do</option>
+                  <option value="inprogress">In Progress</option>
+                  <option value="done">Done</option>
+                </select>
+              </div>
+              <div className="mb-3">
+                <label>Assign to User</label>
+                <select className="form-select" value={userId} onChange={(e) => setUserId(e.target.value)}>
+                  <option value="">None</option>
+                  {users.map(user => (
+                    <option key={user.id} value={user.id}>{user.name}</option>
+                  ))}
+                </select>
+              </div>
+              <button type="submit" className="btn btn-primary">Save</button>
+            </form>
+          </div>
         </div>
-
-        {error && <div className="alert alert-danger">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Task Title</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="Enter task title"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Description</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Enter task description (optional)"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Assign To</label>
-            <select
-              name="assigned_to"
-              value={formData.assigned_to}
-              onChange={handleChange}
-            >
-              <option value="">Unassigned</option>
-              {users.map(user => (
-                <option key={user.id} value={user.id}>
-                  {user.full_name} ({user.username})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="modal-footer">
-            <button type="button" className="btn-secondary" onClick={onClose}>
-              Cancel
-            </button>
-            <button type="submit" className="btn-primary">
-              {task ? 'Update Task' : 'Create Task'}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

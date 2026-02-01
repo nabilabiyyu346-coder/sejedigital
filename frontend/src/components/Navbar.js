@@ -1,7 +1,6 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
-import '../styles/navbar.css';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -13,24 +12,41 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar">
-      <div className="container navbar-content">
-        <div className="navbar-brand">
-          <h1>Task Management</h1>
-        </div>
-
-        <div className="navbar-menu">
-          <ul>
-            <li><a href="/tasks">Tasks</a></li>
-            <li><a href="/users">Users</a></li>
+    <nav className="navbar navbar-expand-lg navbar-light bg-light">
+      <div className="container-fluid">
+        <Link className="navbar-brand" to="/">Task Management</Link>
+        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span className="navbar-toggler-icon"></span>
+        </button>
+        <div className="collapse navbar-collapse" id="navbarNav">
+          <ul className="navbar-nav">
+            {user && (
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/tasks">Tasks</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/users">Users</Link>
+                </li>
+              </>
+            )}
           </ul>
-        </div>
-
-        <div className="navbar-user">
-          <span className="user-name">{user?.full_name || user?.username}</span>
-          <button className="btn-secondary btn-sm" onClick={handleLogout}>
-            Logout
-          </button>
+          <ul className="navbar-nav ms-auto">
+            {user ? (
+              <li className="nav-item">
+                <button className="nav-link btn btn-link" onClick={handleLogout}>Logout ({user.email})</button>
+              </li>
+            ) : (
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/login">Login</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/register">Register</Link>
+                </li>
+              </>
+            )}
+          </ul>
         </div>
       </div>
     </nav>

@@ -1,73 +1,58 @@
-import React, { createContext, useState, useCallback, useEffect } from 'react';
-import { authService } from '../services';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import apiClient from '../services/apiClient';
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  // Check if user is logged in on mount
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const response = await authService.getCurrentUser();
-          setUser(response.data.data);
-        } catch (err) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-        }
-      }
-      setLoading(false);
-    };
-
-    checkAuth();
-  }, []);
-
-  const register = useCallback(async (credentials) => {
-    setError(null);
-    try {
-      const response = await authService.register(credentials);
-      const { token, user: userData } = response.data.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-      return response.data;
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Registration failed';
-      setError(errorMessage);
-      throw err;
+    const token = localStorage.getItem('token');
+    if (token) {
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      fetchCurrentUser();
     }
   }, []);
 
-  const login = useCallback(async (credentials) => {
-    setError(null);
+  const fetchCurrentUser = async () => {
     try {
-      const response = await authService.login(credentials);
-      const { token, user: userData } = response.data.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-      return response.data;
+      const res = await apiClient.get('/auth/me');
+      setUser(res.data.user);
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Login failed';
-      setError(errorMessage);
-      throw err;
+      logout();
     }
-  }, []);
+  };
 
-  const logout = useCallback(() => {
-    authService.logout();
+  const login = async (email, password) => {
+    const res = await apiClient.post('/auth/login', { email, password });
+    localStorage.setItem('token', res.data.token);
+    apiClient.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+    await fetchCurrentUser();
+  };
+
+  const register = async (name, email, password) => {
+    const res = await apiClient.post('/auth/register', { name, email, password });
+    localStorage.setItem('token', res.data.token);
+    apiClient.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+    await fetchCurrentUser();
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    delete apiClient.defaults.headers.common['Authorization'];
     setUser(null);
-    setError(null);
-  }, []);
+  };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, register, login, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+// 🔑 INI YANG TADI HILANG
+export const useAuth = () => {
+  return useContext(AuthContext);
+};
+
+export default AuthContext;

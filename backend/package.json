@@ -15,7 +15,10 @@
     "jsonwebtoken": "^9.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "express-validator": "^7.0.0"
+    "express-validator": "^7.0.0",
+    "helmet": "^6.0.0",
+    "morgan": "^1.10.0",
+    "express-rate-limit": "^6.7.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",

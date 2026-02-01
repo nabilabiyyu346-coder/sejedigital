@@ -1,203 +1,102 @@
-import React, { useEffect, useState } from 'react';
-import { taskService, userService } from '../services';
-import { useAuth } from '../context/useAuth';
+import React, { useState, useEffect } from 'react';
+import apiClient from '../services/apiClient';
 import TaskModal from '../components/TaskModal';
-import '../styles/tasks.css';
 
 const TasksPage = () => {
-  const { user: currentUser } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [editingTask, setEditingTask] = useState(null);
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [selectedTask, setSelectedTask] = useState(null);
 
-  const fetchData = async () => {
-    setLoading(true);
+  useEffect(() => {
+    fetchTasks();
+    fetchUsers();
+  }, []);
+
+  const fetchTasks = async () => {
     try {
-      const tasksResponse = await taskService.getAll();
-      const usersResponse = await userService.getAll();
-      setTasks(tasksResponse.data.data);
-      setUsers(usersResponse.data.data);
+      const res = await apiClient.get('/tasks');
+      setTasks(res.data.tasks);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch data');
-    } finally {
-      setLoading(false);
+      alert('Error fetching tasks');
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const fetchUsers = async () => {
+    try {
+      const res = await apiClient.get('/users');
+      setUsers(res.data.users);
+    } catch (err) {
+      alert('Error fetching users');
+    }
+  };
 
-  const handleOpenModal = (task = null) => {
-    setEditingTask(task);
+  const openModal = (task = null) => {
+    setSelectedTask(task);
     setShowModal(true);
   };
 
-  const handleCloseModal = () => {
+  const closeModal = () => {
     setShowModal(false);
-    setEditingTask(null);
+    setSelectedTask(null);
   };
 
-  const handleSaveTask = async (formData) => {
+  const handleSave = () => {
+    fetchTasks();
+  };
+
+  const handleUpdateStatus = async (id, status) => {
     try {
-      setSuccess('');
-      if (editingTask) {
-        await taskService.update(editingTask.id, formData);
-        setSuccess('Task updated successfully');
-      } else {
-        await taskService.create(formData);
-        setSuccess('Task created successfully');
-      }
-      handleCloseModal();
-      fetchData();
+      await apiClient.patch(`/tasks/${id}/status`, { status });
+      fetchTasks();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save task');
+      alert('Error updating status');
     }
   };
 
-  const handleUpdateStatus = async (taskId, newStatus) => {
-    try {
-      setSuccess('');
-      await taskService.updateStatus(taskId, newStatus);
-      setSuccess('Task status updated successfully');
-      fetchData();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update status');
-    }
-  };
-
-  const handleDeleteTask = async (taskId) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
+  const handleDelete = async (id) => {
+    if (window.confirm('Delete task?')) {
       try {
-        setSuccess('');
-        await taskService.delete(taskId);
-        setSuccess('Task deleted successfully');
-        fetchData();
+        await apiClient.delete(`/tasks/${id}`);
+        fetchTasks();
       } catch (err) {
-        setError(err.response?.data?.message || 'Failed to delete task');
+        alert('Error deleting task');
       }
     }
   };
-
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case 'completed':
-        return 'badge-success';
-      case 'in_progress':
-        return 'badge-warning';
-      case 'cancelled':
-        return 'badge-danger';
-      default:
-        return 'badge-primary';
-    }
-  };
-
-  const filteredTasks = filterStatus === 'all' 
-    ? tasks 
-    : tasks.filter(t => t.status === filterStatus);
-
-  if (loading) return <div className="loading">Loading tasks...</div>;
 
   return (
-    <div className="tasks-container">
-      <div className="tasks-header">
-        <h1>Task Management</h1>
-        <button className="btn-primary" onClick={() => handleOpenModal()}>
-          + Create New Task
-        </button>
-      </div>
-
-      {error && <div className="alert alert-danger">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
-
-      <div className="tasks-filter">
-        <label>Filter by Status:</label>
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-          <option value="all">All Tasks</option>
-          <option value="pending">Pending</option>
-          <option value="in_progress">In Progress</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-      </div>
-
-      <div className="tasks-table-wrapper">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Description</th>
-              <th>Status</th>
-              <th>Assigned To</th>
-              <th>Created By</th>
-              <th>Actions</th>
+    <div className="container mt-5">
+      <h2>Tasks</h2>
+      <button className="btn btn-primary mb-3" onClick={() => openModal()}>Create Task</button>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Assigned To</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tasks.map(task => (
+            <tr key={task.id}>
+              <td>{task.title}</td>
+              <td>{task.description}</td>
+              <td>{task.status}</td>
+              <td>{users.find(u => u.id === task.user_id)?.name || 'None'}</td>
+              <td>
+                <button className="btn btn-sm btn-info" onClick={() => openModal(task)}>Edit</button>
+                <button className="btn btn-sm btn-warning" onClick={() => handleUpdateStatus(task.id, 'inprogress')}>In Progress</button>
+                <button className="btn btn-sm btn-success" onClick={() => handleUpdateStatus(task.id, 'done')}>Done</button>
+                <button className="btn btn-sm btn-danger" onClick={() => handleDelete(task.id)}>Delete</button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {filteredTasks.length === 0 ? (
-              <tr>
-                <td colSpan="6" style={{ textAlign: 'center', padding: '40px' }}>
-                  No tasks found
-                </td>
-              </tr>
-            ) : (
-              filteredTasks.map(task => (
-                <tr key={task.id}>
-                  <td className="task-title">{task.title}</td>
-                  <td className="task-description">
-                    {task.description?.substring(0, 50)}
-                    {task.description && task.description.length > 50 ? '...' : ''}
-                  </td>
-                  <td>
-                    <select
-                      className={`status-select ${getStatusBadgeClass(task.status)}`}
-                      value={task.status}
-                      onChange={(e) => handleUpdateStatus(task.id, e.target.value)}
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
-                  </td>
-                  <td>{task.assigned_to_username || 'Unassigned'}</td>
-                  <td>{task.created_by_username}</td>
-                  <td>
-                    <div className="table-actions">
-                      <button
-                        className="btn-primary btn-sm"
-                        onClick={() => handleOpenModal(task)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn-danger btn-sm"
-                        onClick={() => handleDeleteTask(task.id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {showModal && (
-        <TaskModal
-          task={editingTask}
-          users={users}
-          onClose={handleCloseModal}
-          onSave={handleSaveTask}
-        />
-      )}
+          ))}
+        </tbody>
+      </table>
+      <TaskModal show={showModal} onClose={closeModal} task={selectedTask} users={users} onSave={handleSave} />
     </div>
   );
 };

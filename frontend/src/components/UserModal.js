@@ -1,116 +1,67 @@
 import React, { useState, useEffect } from 'react';
+import apiClient from '../services/apiClient';
 
-const UserModal = ({ user, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    full_name: '',
-    password: ''
-  });
-  const [error, setError] = useState('');
+const UserModal = ({ show, onClose, user, onSave }) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
     if (user) {
-      setFormData({
-        username: user.username,
-        email: user.email,
-        full_name: user.full_name,
-        password: ''
-      });
+      setName(user.name);
+      setEmail(user.email);
+      setPassword('');
+    } else {
+      setName('');
+      setEmail('');
+      setPassword('');
     }
   }, [user]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
-    if (!formData.email) {
-      setError('Email is required');
-      return;
+    const data = { name, email, password };
+    try {
+      if (user) {
+        await apiClient.put(`/users/${user.id}`, data);
+      } else {
+        await apiClient.post('/users', data);
+      }
+      onSave();
+      onClose();
+    } catch (err) {
+      alert('Error saving user');
     }
-
-    if (!user && !formData.password) {
-      setError('Password is required for new users');
-      return;
-    }
-
-    const submitData = { ...formData };
-    if (!submitData.password) {
-      delete submitData.password;
-    }
-
-    onSave(submitData);
   };
+
+  if (!show) return null;
 
   return (
-    <div className="modal">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h2>{user ? 'Edit User' : 'Add New User'}</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
+    <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      <div className="modal-dialog">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">{user ? 'Edit User' : 'Create User'}</h5>
+            <button type="button" className="btn-close" onClick={onClose}></button>
+          </div>
+          <div className="modal-body">
+            <form onSubmit={handleSubmit}>
+              <div className="mb-3">
+                <label>Name</label>
+                <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} required />
+              </div>
+              <div className="mb-3">
+                <label>Email</label>
+                <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </div>
+              <div className="mb-3">
+                <label>Password {user ? '(optional)' : ''}</label>
+                <input type="password" className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required={!user} />
+              </div>
+              <button type="submit" className="btn btn-primary">Save</button>
+            </form>
+          </div>
         </div>
-
-        {error && <div className="alert alert-danger">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Username</label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              disabled={!!user}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Full Name</label>
-            <input
-              type="text"
-              name="full_name"
-              value={formData.full_name}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Password {user ? '(leave blank to keep current)' : ''}</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required={!user}
-            />
-          </div>
-
-          <div className="modal-footer">
-            <button type="button" className="btn-secondary" onClick={onClose}>
-              Cancel
-            </button>
-            <button type="submit" className="btn-primary">
-              {user ? 'Update' : 'Create'}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

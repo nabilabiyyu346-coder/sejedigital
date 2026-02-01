@@ -4,7 +4,6 @@ const authenticateToken = require('../middleware/auth');
 
 const router = express.Router();
 
-// All task routes require authentication
 router.use(authenticateToken);
 
 router.get('/', taskController.getAllTasks);

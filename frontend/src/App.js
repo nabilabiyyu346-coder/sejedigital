@@ -1,60 +1,39 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { useAuth } from './context/useAuth';
-import Navbar from './components/Navbar';
-import PrivateRoute from './components/PrivateRoute';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import TasksPage from './pages/TasksPage';
-import UsersPage from './pages/UsersPage';
-import './styles/global.css';
+import React, { useState } from 'react';
+import Login from './components/PrivateRoute';
+import UserManagement from './components/UserModal';
+import TaskManagement from './components/TaskModal';
+import axios from 'axios';
 
-const AppContent = () => {
-  const { user, loading } = useAuth();
+const App = () => {
+  const [token, setToken ] = useState(localStorage.getItem('token'));
+  const [loggedIn, setLoggedIn] = useState(!!token);
 
-  if (loading) {
-    return <div className="loading">Loading...</div>;
-  }
+  axios.defaults.baseURL = 'http://localhost:5000/api';
+  axios.defaults.headers.common['Authorization'] = token ? `Bearer ${token}` : '';
+
+  const handleLogin = (newToken) => {
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+    setLoggedIn(true);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setLoggedIn(false);
+    axios.defaults.headers.common['Authorization'] = '';
+  };
+
+  if (!loggedIn) return <Login onLogin={handleLogin} />;
 
   return (
-    <>
-      {user && <Navbar />}
-      <main className={user ? '' : 'auth-main'}>
-        <Routes>
-          <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/tasks" />} />
-          <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to="/tasks" />} />
-          <Route
-            path="/tasks"
-            element={
-              <PrivateRoute>
-                <TasksPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/users"
-            element={
-              <PrivateRoute>
-                <UsersPage />
-              </PrivateRoute>
-            }
-          />
-          <Route path="/" element={<Navigate to={user ? '/tasks' : '/login'} />} />
-        </Routes>
-      </main>
-    </>
+    <div>
+      <button onClick={handleLogout}>Logout</button>
+      <UserManagement />
+      <TaskManagement />
+    </div>
   );
 };
-
-function App() {
-  return (
-    <Router>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </Router>
-  );
-}
 
 export default App;

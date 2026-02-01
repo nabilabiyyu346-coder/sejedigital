@@ -1,105 +1,42 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
-import '../styles/auth.css';
+import { useNavigate } from 'react-router-dom';
 
 const RegisterPage = () => {
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    full_name: ''
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-
     try {
-      await register(formData);
-      navigate('/tasks');
+      await register(name, email, password);
+      navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
-    } finally {
-      setLoading(false);
+      alert('Registration failed');
     }
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-form">
-        <h1>Task Management</h1>
-        <p>Create a new account</p>
-
-        {error && <div className="alert alert-danger">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Username</label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              placeholder="Choose a username"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Full Name</label>
-            <input
-              type="text"
-              name="full_name"
-              value={formData.full_name}
-              onChange={handleChange}
-              placeholder="Enter your full name"
-            />
-          </div>
-
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Creating account...' : 'Register'}
-          </button>
-        </form>
-
-        <p className="auth-link">
-          Already have an account? <a href="/login">Login here</a>
-        </p>
-      </div>
+    <div className="container mt-5">
+      <h2>Register</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-3">
+          <label>Name</label>
+          <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} required />
+        </div>
+        <div className="mb-3">
+          <label>Email</label>
+          <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        </div>
+        <div className="mb-3">
+          <label>Password</label>
+          <input type="password" className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        </div>
+        <button type="submit" className="btn btn-primary">Register</button>
+      </form>
     </div>
   );
 };
